@@ -38,13 +38,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -f roundup.md ]; then
-            # The @mention and assignment trigger a "participating" email,
+            # The @mention triggers a "participating" email,
             # which arrives even when watch notifications don't.
             { echo "@$GITHUB_REPOSITORY_OWNER"; echo; cat roundup.md; } > issue_body.md
             gh issue create \
               --title "$(cat roundup_title.txt)" \
               --body-file issue_body.md \
-              --assignee "$GITHUB_REPOSITORY_OWNER" \
               --repo "$GITHUB_REPOSITORY"
             rm -f roundup.md roundup_title.txt issue_body.md
           else

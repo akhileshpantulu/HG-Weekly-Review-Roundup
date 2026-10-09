@@ -71,13 +71,14 @@ Actions tab > "Weekly review roundup" > **Run workflow**, and set "add a fake re
 ```
 
 - `brand` is `marriott` or `ihg` and picks the passkey. A hotel can also carry its own `"passkey"`.
+- `short_name` is optional and is used in the overview table to keep it narrow enough for email.
 - Add `"enabled": false` to pause a hotel without deleting it.
 - **Marriott**: `product_id` is the five-letter MARSHA code from the hotel's marriott.com URL (e.g. `parvx` in `/hotels/parvx-moxy-paris-la-villette/`).
 - **IHG**: `product_id` is the five-letter hotel code from the ihg.com URL (e.g. `LONLP` for Kimpton Fitzroy London, `LONHB` for InterContinental London Park Lane).
 
 ## Notes
 
-- Each roundup issue @mentions and is assigned to the repo owner, so GitHub emails it even if you are not watching the repo (same approach as ReviewTracker). If emails still don't arrive, check https://github.com/settings/notifications (Email ticked under Participating, and the custom routing address) and your spam folder for notifications@github.com.
+- Each roundup issue @mentions the repo owner, so GitHub emails it even if you are not watching the repo (same approach as ReviewTracker). If emails still don't arrive, check https://github.com/settings/notifications (Email ticked under Participating, and the custom routing address) and your spam folder for notifications@github.com.
 
 - Schedule: Fridays at 13:07 UTC (9:07am ET in summer, 8:07am ET in winter). Change the `cron` line in the workflow to move it. GitHub can start scheduled runs a few minutes late.
 - Passkeys are public client-side keys embedded in each brand's website. If one is rotated, that hotel shows under "Errors" in the email (or the run fails and GitHub emails you); the current keys are in ReviewTracker's `docs/index.html`, or can be read from the Network tab (filter `bazaarvoice`) on a hotel's review page.

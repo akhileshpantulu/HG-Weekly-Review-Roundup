@@ -230,6 +230,21 @@ def star_counts(reviews):
     return counts
 
 
+def text_table(headers, rows):
+    """Fixed-width table in a code block. Email clients render code blocks in a
+    monospace font, so columns stay aligned where markdown tables lose them."""
+    cols = list(zip(headers, *rows))
+    widths = [max(len(str(v)) for v in col) for col in cols]
+
+    def line(values):
+        cells = [str(v).ljust(w) if i == 0 else str(v).rjust(w)
+                 for i, (v, w) in enumerate(zip(values, widths))]
+        return " | ".join(cells).rstrip()
+
+    rule = "-+-".join("-" * w for w in widths)
+    return "\n".join(["```text", line(headers), rule] + [line(r) for r in rows] + ["```"])
+
+
 def format_review(r):
     rating = r.get("Rating")
     low = " **LOW SCORE**" if isinstance(rating, int) and rating <= 2 else ""
@@ -255,12 +270,12 @@ def hotel_section(h, include_reviews=True):
     out.append(f"- **New reviews this week:** {len(new)}")
     out.append("")
 
-    out.append("| Stars | New this week | All-time count | Change vs last week |")
-    out.append("|---|---|---|---|")
+    rows = []
     for s in STARS:
         now_c = cur["distribution"].get(str(s), 0)
         was_c = prev["distribution"].get(str(s), 0)
-        out.append(f"| {'★' * s} | {counts[s]} | {now_c:,d} | {fmt_delta(now_c - was_c)} |")
+        rows.append([f"{s} star", counts[s], f"{now_c:,d}", fmt_delta(now_c - was_c)])
+    out.append(text_table(["Rating", "New this week", "All-time", "Change"], rows))
     out.append("")
 
     if new:
@@ -303,20 +318,22 @@ def build_report(results, baselined, skipped, errors, period_start, period_end):
                     f"{total_new} new review(s) this week.**",
                     "",
                 ]
-            lines += [
-                "| Hotel | Reviews | Change | Avg rating | Change | New | 5★ | 4★ | 3★ | 2★ | 1★ |",
-                "|---|---|---|---|---|---|---|---|---|---|---|",
-            ]
+            rows = []
             for h in results:
                 prev, cur = h["prev"], h["cur"]
                 total_d = (cur["total"] - prev["total"]) if None not in (cur["total"], prev["total"]) else None
                 avg_d = (cur["average"] - prev["average"]) if None not in (cur["average"], prev["average"]) else None
                 c = star_counts(h["new"])
-                lines.append(
-                    f"| {h['name']} | {fmt_num(cur['total'])} | {fmt_delta(total_d)} | "
-                    f"{fmt_num(cur['average'], 2)} | {fmt_delta(avg_d, 2)} | {len(h['new'])} | "
-                    + " | ".join(str(c[s]) for s in STARS) + " |"
+                rows.append(
+                    [h["short_name"], fmt_num(cur["total"]), fmt_delta(total_d),
+                     fmt_num(cur["average"], 2), fmt_delta(avg_d, 2), len(h["new"])]
+                    + [c[s] for s in STARS]
                 )
+            lines.append("Chg = change vs last week. 5* to 1* = new reviews this week by star rating.")
+            lines.append("")
+            lines.append(text_table(
+                ["Hotel", "Reviews", "Chg", "Rating", "Chg", "New", "5*", "4*", "3*", "2*", "1*"], rows
+            ))
             lines += ["", "## Hotel detail", ""]
             lines += [hotel_section(h, include_reviews) for h in results]
         if not include_reviews:
@@ -400,6 +417,7 @@ def main():
 
         results.append({
             "name": name,
+            "short_name": hotel.get("short_name") or name,
             "brand": hotel["brand"],
             "reviews_url": hotel.get("reviews_url"),
             "prev": {k: prev_state.get(k) for k in ("total", "average", "distribution")},
