@@ -7,8 +7,9 @@ use for their own review pages, compares them to last week's snapshot in
 state.json, and writes roundup.md. The workflow opens a GitHub Issue from it,
 and GitHub emails the repo owner the issue content.
 
-If ANTHROPIC_API_KEY is set, the new reviews for each hotel are summarized by
-Claude. Without it, a plain statistical summary is used instead.
+The new reviews for each hotel are summarized by an AI model: Claude if
+ANTHROPIC_API_KEY is set, otherwise GitHub Models (free, uses the workflow's
+GITHUB_TOKEN). If neither is available, a plain statistical summary is used.
 
 The first run for a hotel sets its baseline: it is included in the roundup
 with its current numbers and zero changes.
@@ -22,7 +23,9 @@ changed.
 import json
 import os
 import random
+import re
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -54,6 +57,9 @@ FAKE_REVIEWS = [
 ]
 
 CLAUDE_MODEL = "claude-opus-5-5"
+GITHUB_MODELS_URL = "https://models.github.ai/inference/chat/completions"
+# Tried in order; set GITHUB_MODELS_MODEL to put a different model first.
+GITHUB_MODELS = ["meta/Llama-3.3-70B-Instruct", "openai/gpt-4.1-mini"]
 SUMMARY_PROMPT = """You are writing one section of a weekly guest review roundup for a hotel \
 asset manager. Below are the guest reviews posted this week for {hotel}.
 
@@ -191,6 +197,42 @@ def add_fake_review(h, now):
     cur["distribution"][str(rating)] = cur["distribution"].get(str(rating), 0) + 1
     h["cur"] = cur
     h["new"] = [review] + h["new"]
+
+
+def github_models_summary(token, hotel_name, reviews):
+    prompt = SUMMARY_PROMPT.format(
+        hotel=hotel_name, reviews="\n\n".join(review_line(r) for r in reviews)
+    )
+    models = GITHUB_MODELS
+    if os.environ.get("GITHUB_MODELS_MODEL"):
+        models = [os.environ["GITHUB_MODELS_MODEL"]] + models
+    for model in models:
+        body = json.dumps({
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.2,
+        }).encode("utf-8")
+        req = urllib.request.Request(GITHUB_MODELS_URL, data=body, headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        })
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            text = (data["choices"][0]["message"]["content"] or "").strip()
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:300]
+            print(f"WARNING: GitHub Models {model} failed for {hotel_name}: "
+                  f"HTTP {exc.code} {detail}", file=sys.stderr)
+            continue
+        except Exception as exc:
+            print(f"WARNING: GitHub Models {model} failed for {hotel_name}: {exc}",
+                  file=sys.stderr)
+            continue
+        if text:
+            return re.sub(r"\s*\u2014\s*", ", ", text)
+    return None
 
 
 def basic_summary(reviews):
@@ -367,6 +409,7 @@ def main():
 
     fake_count = int(os.environ.get("TEST_FAKE_REVIEWS") or 0)
 
+    gh_token = os.environ.get("GITHUB_TOKEN")
     client = None
     if os.environ.get("ANTHROPIC_API_KEY"):
         import anthropic
@@ -436,7 +479,11 @@ def main():
 
     for h in results:
         if h["new"]:
-            summary = claude_summary(client, h["name"], h["new"]) if client else None
+            summary = None
+            if client:
+                summary = claude_summary(client, h["name"], h["new"])
+            if not summary and gh_token:
+                summary = github_models_summary(gh_token, h["name"], h["new"])
             h["summary"] = summary or basic_summary(h["new"])
 
     for msg in skipped + errors:

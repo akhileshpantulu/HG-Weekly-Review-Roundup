@@ -12,6 +12,7 @@ on:
 permissions:
   contents: write            # commit state.json back
   issues: write              # open the roundup issue
+  models: read               # summarize new reviews with GitHub Models
 
 jobs:
   roundup:
@@ -29,6 +30,7 @@ jobs:
       - name: Build weekly roundup
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BV_PASSKEY_IHG: ${{ secrets.BV_PASSKEY_IHG }}
           TEST_FAKE_REVIEWS: ${{ inputs.test_fake_reviews || '0' }}
         run: python weekly_roundup.py

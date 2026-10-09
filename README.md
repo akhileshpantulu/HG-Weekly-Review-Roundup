@@ -9,7 +9,7 @@ For the whole portfolio, one overview table. For each hotel:
 - **Total reviews** and the change since last week
 - **Average star rating** and the change since last week
 - **Star distribution**: new reviews this week by star (5 to 1), plus the all-time count per star and its weekly change
-- **Summary of the new reviews**: written by Claude if an `ANTHROPIC_API_KEY` secret is set (praise, complaints, low-score items to follow up on); otherwise a short statistical summary
+- **Summary of the new reviews**: written by an AI model covering praise, complaints and low-score items to follow up on. It uses GitHub Models (free, no key needed; Meta's open-source Llama 3.3 70B, falling back to GPT-4.1 mini). If an `ANTHROPIC_API_KEY` secret is set, Claude is used instead. If no model is reachable, a short statistical summary is used
 - The full list of new reviews (collapsed), with 1 and 2 star reviews flagged **LOW SCORE**
 
 The issue title shows the total new reviews and how many were low scores.
@@ -25,7 +25,7 @@ The issue title shows the total new reviews and how many were low scores.
 
 1. Push this repo to GitHub (keep `.github/workflows/weekly-roundup.yml` at that path).
 2. Make sure GitHub notification email is on: https://github.com/settings/notifications, under "Subscriptions > Watching", tick **Email**.
-3. Optional but recommended, for the written review summaries: in the repo go to **Settings > Secrets and variables > Actions > New repository secret**, name it `ANTHROPIC_API_KEY`, paste a key from https://console.anthropic.com.
+3. Optional: review summaries use GitHub Models by default with no setup. To use Claude instead, add a repository secret named `ANTHROPIC_API_KEY` (Settings > Secrets and variables > Actions) with a key from https://console.anthropic.com. To try a different GitHub model, add a repository variable or env `GITHUB_MODELS_MODEL` (e.g. `mistral-ai/Mistral-Large-2411`).
 4. Fill in `hotels.json` (below).
 5. Go to the **Actions** tab, select "Weekly review roundup", click **Run workflow** (leave the box at `0`). You get a roundup of where each hotel stands now, with 0 changes, and the baseline is saved. Each Friday after that reports the changes.
 
@@ -83,4 +83,4 @@ Actions tab > "Weekly review roundup" > **Run workflow**, and set "add a fake re
 - Schedule: Fridays at 13:07 UTC (9:07am ET in summer, 8:07am ET in winter). Change the `cron` line in the workflow to move it. GitHub can start scheduled runs a few minutes late.
 - Passkeys are public client-side keys embedded in each brand's website. If one is rotated, that hotel shows under "Errors" in the email (or the run fails and GitHub emails you); the current keys are in ReviewTracker's `docs/index.html`, or can be read from the Network tab (filter `bazaarvoice`) on a hotel's review page.
 - If a hotel fails to load, its previous snapshot is kept so the next successful week compares against it.
-- Summaries use the Claude API (one request per hotel with new reviews); with no key set, nothing is sent to Anthropic.
+- Summaries make one model request per hotel with new reviews. Review text is sent to GitHub Models (or to Anthropic if the Claude key is set).
