@@ -19,7 +19,7 @@ The issue title shows the total new reviews and how many were low scores.
 1. `weekly_roundup.py` reads `hotels.json`, then calls the Bazaarvoice API for each hotel: review statistics plus all reviews submitted in the last 60 days.
 2. New reviews are the ones whose IDs were not seen last week. Looking back 60 days catches reviews that were written earlier but published late.
 3. Last week's totals, average, star distribution and seen review IDs live in `state.json`, which the workflow commits back after each run.
-4. The first run for any hotel sets its baseline; changes for that hotel start the following week.
+4. Every run sends a roundup, including manual runs from the Actions tab. The first run for any hotel records its baseline and shows it with its current numbers and 0 changes; changes start the following week.
 
 ## Setup
 
@@ -27,7 +27,7 @@ The issue title shows the total new reviews and how many were low scores.
 2. Make sure GitHub notification email is on: https://github.com/settings/notifications, under "Subscriptions > Watching", tick **Email**.
 3. Optional but recommended, for the written review summaries: in the repo go to **Settings > Secrets and variables > Actions > New repository secret**, name it `ANTHROPIC_API_KEY`, paste a key from https://console.anthropic.com.
 4. Fill in `hotels.json` (below).
-5. Go to the **Actions** tab, select "Weekly review roundup", click **Run workflow** once to set the baseline. The next Friday run sends the first real roundup.
+5. Go to the **Actions** tab, select "Weekly review roundup", click **Run workflow** (leave the box at `0`). You get a roundup of where each hotel stands now, with 0 changes, and the baseline is saved. Each Friday after that reports the changes.
 
 ## Hotels tracked
 

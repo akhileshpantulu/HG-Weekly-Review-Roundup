@@ -10,7 +10,8 @@ and GitHub emails the repo owner the issue content.
 If ANTHROPIC_API_KEY is set, the new reviews for each hotel are summarized by
 Claude. Without it, a plain statistical summary is used instead.
 
-The first run for a hotel sets its baseline and reports no new reviews.
+The first run for a hotel sets its baseline: it is included in the roundup
+with its current numbers and zero changes.
 
 Test mode: set TEST_FAKE_REVIEWS=N to add one made-up review to N random
 hotels on top of the live data. The roundup is titled [TEST], hotels without
@@ -288,9 +289,21 @@ def build_report(results, baselined, skipped, errors, period_start, period_end):
             "",
         ]
         if results:
+            totals = [h["cur"]["total"] for h in results if h["cur"]["total"] is not None]
+            weighted = sum(
+                h["cur"]["total"] * h["cur"]["average"] for h in results
+                if h["cur"]["total"] and h["cur"]["average"] is not None
+            )
+            total_new = sum(len(h["new"]) for h in results)
+            lines += ["## Portfolio overview", ""]
+            if totals and sum(totals):
+                lines += [
+                    f"**{len(results)} hotels, {sum(totals):,d} reviews in total, "
+                    f"weighted average rating {weighted / sum(totals):.2f}/5, "
+                    f"{total_new} new review(s) this week.**",
+                    "",
+                ]
             lines += [
-                "## Portfolio overview",
-                "",
                 "| Hotel | Reviews | Change | Avg rating | Change | New | 5★ | 4★ | 3★ | 2★ | 1★ |",
                 "|---|---|---|---|---|---|---|---|---|---|---|",
             ]
@@ -309,7 +322,7 @@ def build_report(results, baselined, skipped, errors, period_start, period_end):
         if not include_reviews:
             lines.append("_Full review listings were left out to fit GitHub's issue size limit._\n")
         if baselined:
-            lines.append("**Baseline set this week (changes reported from next week):** "
+            lines.append("**First run for these hotels, so changes show as 0 and are reported from next week:** "
                          + ", ".join(baselined) + "\n")
         if skipped:
             lines.append("**Skipped:**\n" + "\n".join(f"- {s}" for s in skipped) + "\n")
@@ -373,12 +386,9 @@ def main():
         seen_window = {r["Id"]: r["SubmissionTime"] for r in reviews}
         prev_state = hotel_state.get(key)
 
-        if prev_state is None and fake_count:
-            prev_state = {**cur, "seenIds": seen_window}
         if prev_state is None:
             baselined.append(name)
-            new_state[key] = {**cur, "seenIds": seen_window}
-            continue
+            prev_state = {**cur, "seenIds": seen_window}
 
         seen = prev_state.get("seenIds", {})
         new = [r for r in reviews if r["Id"] not in seen]
@@ -415,7 +425,7 @@ def main():
         print(f"WARNING: {msg}", file=sys.stderr)
 
     if not results and not errors and not skipped:
-        print(f"Baseline set for {len(baselined)} hotel(s). No roundup created.")
+        print("No hotels to report on. No roundup created.")
         return
     if errors and not results and not baselined:
         raise RuntimeError("every hotel failed: " + "; ".join(errors))
