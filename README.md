@@ -25,7 +25,7 @@ The issue title shows the total new reviews and how many were low scores.
 
 1. Push this repo to GitHub (keep `.github/workflows/weekly-roundup.yml` at that path).
 2. Make sure GitHub notification email is on: https://github.com/settings/notifications, under "Subscriptions > Watching", tick **Email**.
-3. Optional: review summaries use GitHub Models by default with no setup. To use Claude instead, add a repository secret named `ANTHROPIC_API_KEY` (Settings > Secrets and variables > Actions) with a key from https://console.anthropic.com. To try a different GitHub model, add a repository variable or env `GITHUB_MODELS_MODEL` (e.g. `mistral-ai/Mistral-Large-2411`).
+3. Optional: review summaries use GitHub Models by default with no setup. To use Claude instead, add a repository secret named `ANTHROPIC_API_KEY` (Settings > Secrets and variables > Actions) with a key from https://console.anthropic.com. To try a different GitHub model, add a repository variable named `GITHUB_MODELS_MODEL` (Settings > Secrets and variables > Actions > Variables) set to a model ID from https://github.com/marketplace?type=models.
 4. Fill in `hotels.json` (below).
 5. Go to the **Actions** tab, select "Weekly review roundup", click **Run workflow** (leave the box at `0`). You get a roundup of where each hotel stands now, with 0 changes, and the baseline is saved. Each Friday after that reports the changes.
 
