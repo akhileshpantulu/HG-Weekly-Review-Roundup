@@ -39,7 +39,7 @@ The issue title shows the total new reviews and how many were low scores.
 | Kimpton Atlântico Algarve | IHG | FAOKM |
 | Moxy Paris La Villette | Marriott | PARVX |
 
-**IHG passkey:** add a repository secret named `BV_PASSKEY_IHG` (Settings > Secrets and variables > Actions) holding the IHG Bazaarvoice key from ReviewTracker's `docs/index.html`. Until it is set, Kimpton Atlântico shows under "Skipped". Any brand's key can be supplied this way (`BV_PASSKEY_MARRIOTT` overrides the one in `hotels.json`).
+**Passkeys:** both brands' public Bazaarvoice display keys are in `hotels.json` (the IHG one matches ReviewTracker's `docs/index.html`). A repository secret named `BV_PASSKEY_MARRIOTT` or `BV_PASSKEY_IHG` overrides the file if a key is rotated.
 
 ## Test run
 
@@ -51,7 +51,7 @@ Actions tab > "Weekly review roundup" > **Run workflow**, and set "add a fake re
 {
   "passkeys": {
     "marriott": "canCX9lvC812oa4Y6HYf4gmWK5uszkZCKThrdtYkZqcYE",
-    "ihg": "<IHG passkey, see ReviewTracker docs/index.html>"
+    "ihg": "caa0ppaDgj9LhzGyxZyvNFk3cUY4i9ZwioL5TlFHEkwjs"
   },
   "hotels": [
     {
