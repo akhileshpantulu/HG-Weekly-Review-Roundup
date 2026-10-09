@@ -35,7 +35,7 @@ The issue title shows the total new reviews and how many were low scores.
 {
   "passkeys": {
     "marriott": "canCX9lvC812oa4Y6HYf4gmWK5uszkZCKThrdtYkZqcYE",
-    "ihg": "<IHG passkey>"
+    "ihg": "<IHG passkey, see ReviewTracker docs/index.html>"
   },
   "hotels": [
     {
@@ -45,9 +45,9 @@ The issue title shows the total new reviews and how many were low scores.
       "reviews_url": "https://www.marriott.com/en-us/hotels/parvx-moxy-paris-la-villette/reviews/"
     },
     {
-      "name": "Example IHG hotel",
+      "name": "Kimpton Fitzroy London",
       "brand": "ihg",
-      "product_id": "<IHG product ID>",
+      "product_id": "LONLP",
       "reviews_url": "https://www.ihg.com/..."
     }
   ]
@@ -57,11 +57,11 @@ The issue title shows the total new reviews and how many were low scores.
 - `brand` is `marriott` or `ihg` and picks the passkey. A hotel can also carry its own `"passkey"`.
 - Add `"enabled": false` to pause a hotel without deleting it.
 - **Marriott**: `product_id` is the five-letter MARSHA code from the hotel's marriott.com URL (e.g. `parvx` in `/hotels/parvx-moxy-paris-la-villette/`).
-- **IHG**: the IHG passkey and product ID still need to be read from ihg.com once. Open a hotel's page on ihg.com, open the browser developer tools (F12), go to the **Network** tab, filter for `bazaarvoice`, then scroll to or open the reviews section. A request to `api.bazaarvoice.com/data/...` (or `apps.bazaarvoice.com`) carries `passkey=...` and `Filter=ProductId:...` in its URL. Put the passkey under `passkeys.ihg` and the product ID in the hotel entry. Until the IHG passkey is set, IHG hotels are listed as "Skipped" in the email.
+- **IHG**: `product_id` is the five-letter hotel code from the ihg.com URL (e.g. `LONLP` for Kimpton Fitzroy London, `LONHB` for InterContinental London Park Lane).
 
 ## Notes
 
 - Schedule: Fridays at 13:07 UTC (9:07am ET in summer, 8:07am ET in winter). Change the `cron` line in the workflow to move it. GitHub can start scheduled runs a few minutes late.
-- Passkeys are public client-side keys embedded in each brand's website. If one is rotated, that hotel shows under "Errors" in the email (or the run fails and GitHub emails you); read the new key the same way as above.
+- Passkeys are public client-side keys embedded in each brand's website. If one is rotated, that hotel shows under "Errors" in the email (or the run fails and GitHub emails you); the current keys are in ReviewTracker's `docs/index.html`, or can be read from the Network tab (filter `bazaarvoice`) on a hotel's review page.
 - If a hotel fails to load, its previous snapshot is kept so the next successful week compares against it.
 - Summaries use the Claude API (one request per hotel with new reviews); with no key set, nothing is sent to Anthropic.

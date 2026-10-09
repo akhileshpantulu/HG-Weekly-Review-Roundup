@@ -84,7 +84,7 @@ def fetch_hotel(hotel, passkey, since):
         params = {
             "apiversion": "5.5",
             "passkey": passkey,
-            "Filter": f"ProductId:{hotel['product_id']}",
+            "Filter": f"ProductId:{hotel['product_id'].upper()}",
             "Sort": "SubmissionTime:desc",
             "Limit": PAGE_SIZE,
             "Offset": page * PAGE_SIZE,
