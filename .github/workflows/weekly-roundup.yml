@@ -1,0 +1,50 @@
+name: Weekly review roundup
+
+on:
+  schedule:
+    - cron: "7 13 * * 5"     # Fridays 13:07 UTC (9:07am ET in summer, 8:07am ET in winter)
+  workflow_dispatch: {}      # allows manual "Run workflow" button
+
+permissions:
+  contents: write            # commit state.json back
+  issues: write              # open the roundup issue
+
+jobs:
+  roundup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build weekly roundup
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python weekly_roundup.py
+
+      - name: Open roundup issue (GitHub emails you the issue)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f roundup.md ]; then
+            gh issue create \
+              --title "$(cat roundup_title.txt)" \
+              --body-file roundup.md \
+              --repo "$GITHUB_REPOSITORY"
+            rm -f roundup.md roundup_title.txt
+          else
+            echo "No roundup to send."
+          fi
+
+      - name: Commit updated state
+        run: |
+          git config user.name "review-bot"
+          git config user.email "actions@github.com"
+          git add state.json
+          git diff --cached --quiet || git commit -m "Update weekly review state [skip ci]"
+          git push

@@ -1,0 +1,14 @@
+{
+  "passkeys": {
+    "marriott": "canCX9lvC812oa4Y6HYf4gmWK5uszkZCKThrdtYkZqcYE",
+    "ihg": ""
+  },
+  "hotels": [
+    {
+      "name": "Moxy Paris La Villette",
+      "brand": "marriott",
+      "product_id": "parvx",
+      "reviews_url": "https://www.marriott.com/en-us/hotels/parvx-moxy-paris-la-villette/reviews/"
+    }
+  ]
+}
