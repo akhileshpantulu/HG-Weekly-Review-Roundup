@@ -2,7 +2,11 @@ name: Weekly review roundup
 
 on:
   schedule:
-    - cron: "7 13 * * 5"     # Fridays 13:07 UTC (9:07am ET in summer, 8:07am ET in winter)
+    # Sundays 7pm UK time. Cron runs in UTC, so both 18:00 UTC (7pm BST) and
+    # 19:00 UTC (7pm GMT) are scheduled; the uk-time job lets only the one
+    # that lands at 7pm in London through.
+    - cron: "0 18 * * 0"
+    - cron: "0 19 * * 0"
   workflow_dispatch:         # allows manual "Run workflow" button
     inputs:
       test_fake_reviews:
@@ -15,7 +19,24 @@ permissions:
   models: read               # summarize new reviews with GitHub Models
 
 jobs:
+  uk-time:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+    steps:
+      - id: check
+        run: |
+          hour=$(TZ=Europe/London date +%H)
+          if [ "$GITHUB_EVENT_NAME" != "schedule" ] || [ "$hour" = "19" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "It is ${hour}:00 in London, not 19:00. Skipping this scheduled run."
+          fi
+
   roundup:
+    needs: uk-time
+    if: needs.uk-time.outputs.go == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

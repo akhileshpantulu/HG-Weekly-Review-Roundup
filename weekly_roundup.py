@@ -1,5 +1,5 @@
 """Weekly review roundup for a list of Marriott and IHG hotels (Bazaarvoice).
-Designed to run on a GitHub Actions cron every Friday.
+Designed to run on a GitHub Actions cron every Sunday at 7pm UK time.
 
 For each hotel in hotels.json it pulls the current review statistics and the
 recent reviews from the public Bazaarvoice API that marriott.com and ihg.com

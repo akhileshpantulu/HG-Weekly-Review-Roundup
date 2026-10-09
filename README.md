@@ -1,6 +1,6 @@
 # HG Weekly Review Roundup: Marriott and IHG hotels
 
-Every Friday, a GitHub Actions workflow pulls guest reviews for a list of Marriott and IHG hotels from the public Bazaarvoice API (the same one marriott.com and ihg.com use on their review pages), compares them to last week, and opens a GitHub Issue with the roundup. **GitHub emails you the issue automatically.** Same mechanism as MPLV-Review-Alerts: no SMTP account or extra email address.
+Every Sunday at 7pm UK time, a GitHub Actions workflow pulls guest reviews for a list of Marriott and IHG hotels from the public Bazaarvoice API (the same one marriott.com and ihg.com use on their review pages), compares them to last week, and opens a GitHub Issue with the roundup. **GitHub emails you the issue automatically.** Same mechanism as MPLV-Review-Alerts: no SMTP account or extra email address.
 
 ## What the email contains
 
@@ -27,7 +27,7 @@ The issue title shows the total new reviews and how many were low scores.
 2. Make sure GitHub notification email is on: https://github.com/settings/notifications, under "Subscriptions > Watching", tick **Email**.
 3. Optional: review summaries use GitHub Models by default with no setup. To use Claude instead, add a repository secret named `ANTHROPIC_API_KEY` (Settings > Secrets and variables > Actions) with a key from https://console.anthropic.com. To try a different GitHub model, add a repository variable named `GITHUB_MODELS_MODEL` (Settings > Secrets and variables > Actions > Variables) set to a model ID from https://github.com/marketplace?type=models.
 4. Fill in `hotels.json` (below).
-5. Go to the **Actions** tab, select "Weekly review roundup", click **Run workflow** (leave the box at `0`). You get a roundup of where each hotel stands now, with 0 changes, and the baseline is saved. Each Friday after that reports the changes.
+5. Go to the **Actions** tab, select "Weekly review roundup", click **Run workflow** (leave the box at `0`). You get a roundup of where each hotel stands now, with 0 changes, and the baseline is saved. Each Sunday after that reports the changes.
 
 ## Hotels tracked
 
@@ -80,7 +80,7 @@ Actions tab > "Weekly review roundup" > **Run workflow**, and set "add a fake re
 
 - Each roundup issue @mentions the repo owner, so GitHub emails it even if you are not watching the repo (same approach as ReviewTracker). If emails still don't arrive, check https://github.com/settings/notifications (Email ticked under Participating, and the custom routing address) and your spam folder for notifications@github.com.
 
-- Schedule: Fridays at 13:07 UTC (9:07am ET in summer, 8:07am ET in winter). Change the `cron` line in the workflow to move it. GitHub can start scheduled runs a few minutes late.
+- Schedule: Sundays at 7pm UK time, all year. GitHub cron only runs in UTC, so the workflow is scheduled at both 18:00 and 19:00 UTC and a first job lets through only the run that falls at 7pm in London (BST or GMT). GitHub can start scheduled runs a few minutes late. Manual runs always go ahead.
 - Passkeys are public client-side keys embedded in each brand's website. If one is rotated, that hotel shows under "Errors" in the email (or the run fails and GitHub emails you); the current keys are in ReviewTracker's `docs/index.html`, or can be read from the Network tab (filter `bazaarvoice`) on a hotel's review page.
 - If a hotel fails to load, its previous snapshot is kept so the next successful week compares against it.
 - Summaries make one model request per hotel with new reviews. Review text is sent to GitHub Models (or to Anthropic if the Claude key is set).
