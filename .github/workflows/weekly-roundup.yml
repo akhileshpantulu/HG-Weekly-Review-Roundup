@@ -41,6 +41,7 @@ jobs:
             gh issue create \
               --title "$(cat roundup_title.txt)" \
               --body-file roundup.md \
+              --assignee "$GITHUB_REPOSITORY_OWNER" \
               --repo "$GITHUB_REPOSITORY"
             rm -f roundup.md roundup_title.txt
           else

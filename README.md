@@ -77,6 +77,8 @@ Actions tab > "Weekly review roundup" > **Run workflow**, and set "add a fake re
 
 ## Notes
 
+- Each roundup issue is assigned to the repo owner, so GitHub emails it even if you are not watching the repo. If emails still don't arrive, check https://github.com/settings/notifications (Email ticked under Participating, and the custom routing address) and your spam folder for notifications@github.com.
+
 - Schedule: Fridays at 13:07 UTC (9:07am ET in summer, 8:07am ET in winter). Change the `cron` line in the workflow to move it. GitHub can start scheduled runs a few minutes late.
 - Passkeys are public client-side keys embedded in each brand's website. If one is rotated, that hotel shows under "Errors" in the email (or the run fails and GitHub emails you); the current keys are in ReviewTracker's `docs/index.html`, or can be read from the Network tab (filter `bazaarvoice`) on a hotel's review page.
 - If a hotel fails to load, its previous snapshot is kept so the next successful week compares against it.
