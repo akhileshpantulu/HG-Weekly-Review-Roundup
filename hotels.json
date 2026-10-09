@@ -5,9 +5,33 @@
   },
   "hotels": [
     {
+      "name": "Algarve Marriott Salgados Golf Resort & Spa",
+      "brand": "marriott",
+      "product_id": "FAOSP",
+      "reviews_url": "https://www.marriott.com/en-us/hotels/faosp-algarve-marriott-salgados-golf-resort-and-spa/reviews/"
+    },
+    {
+      "name": "The Westin Salgados Beach Resort, Algarve",
+      "brand": "marriott",
+      "product_id": "FAOAA",
+      "reviews_url": "https://www.marriott.com/en-us/hotels/faoaa-the-westin-salgados-beach-resort-algarve/reviews/"
+    },
+    {
+      "name": "Marriott Residences Salgados Resort, Algarve",
+      "brand": "marriott",
+      "product_id": "FAOPV",
+      "reviews_url": "https://www.marriott.com/en-us/hotels/faopv-marriott-residences-salgados-resort-algarve/reviews/"
+    },
+    {
+      "name": "Kimpton Atlântico Algarve",
+      "brand": "ihg",
+      "product_id": "FAOKM",
+      "reviews_url": "https://www.ihg.com/kimptonhotels/hotels/us/en/albufeira/faokm/hoteldetail/hotel-reviews"
+    },
+    {
       "name": "Moxy Paris La Villette",
       "brand": "marriott",
-      "product_id": "parvx",
+      "product_id": "PARVX",
       "reviews_url": "https://www.marriott.com/en-us/hotels/parvx-moxy-paris-la-villette/reviews/"
     }
   ]

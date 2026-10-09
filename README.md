@@ -29,6 +29,22 @@ The issue title shows the total new reviews and how many were low scores.
 4. Fill in `hotels.json` (below).
 5. Go to the **Actions** tab, select "Weekly review roundup", click **Run workflow** once to set the baseline. The next Friday run sends the first real roundup.
 
+## Hotels tracked
+
+| Hotel | Brand | Code |
+|---|---|---|
+| Algarve Marriott Salgados Golf Resort & Spa | Marriott | FAOSP |
+| The Westin Salgados Beach Resort, Algarve | Marriott | FAOAA |
+| Marriott Residences Salgados Resort, Algarve | Marriott | FAOPV |
+| Kimpton Atlântico Algarve | IHG | FAOKM |
+| Moxy Paris La Villette | Marriott | PARVX |
+
+**IHG passkey:** add a repository secret named `BV_PASSKEY_IHG` (Settings > Secrets and variables > Actions) holding the IHG Bazaarvoice key from ReviewTracker's `docs/index.html`. Until it is set, Kimpton Atlântico shows under "Skipped". Any brand's key can be supplied this way (`BV_PASSKEY_MARRIOTT` overrides the one in `hotels.json`).
+
+## Test run
+
+Actions tab > "Weekly review roundup" > **Run workflow**, and set "add a fake review to this many random hotels" to `2`. It pulls live data, adds one made-up review (marked `[TEST]`) to two random hotels, and opens an issue titled `[TEST] ...` so you get the email. Hotels with no baseline yet are compared against their current numbers. `state.json` is not changed, so the real weekly comparison is unaffected.
+
 ## Adding hotels (`hotels.json`)
 
 ```json

@@ -11,10 +11,16 @@ If ANTHROPIC_API_KEY is set, the new reviews for each hotel are summarized by
 Claude. Without it, a plain statistical summary is used instead.
 
 The first run for a hotel sets its baseline and reports no new reviews.
+
+Test mode: set TEST_FAKE_REVIEWS=N to add one made-up review to N random
+hotels on top of the live data. The roundup is titled [TEST], hotels without
+a baseline are compared against their current numbers, and state.json is not
+changed.
 """
 
 import json
 import os
+import random
 import sys
 import urllib.parse
 import urllib.request
@@ -34,6 +40,17 @@ LOOKBACK_DAYS = 60       # how far back to look for reviews that were published 
 EXCERPT_CHARS = 400
 ISSUE_BODY_LIMIT = 60000  # GitHub caps issue bodies at 65,536 characters
 STARS = [5, 4, 3, 2, 1]
+
+FAKE_REVIEWS = [
+    (5, "Fantastic stay", "Spotless room, very friendly front desk team and a great breakfast. "
+        "The pool area was relaxing and the staff remembered our names."),
+    (4, "Lovely hotel, small niggles", "Great location and comfortable beds. Check-in took a "
+        "while and the room service menu was limited, but we would come back."),
+    (2, "Disappointing for the price", "Room smelled of damp, the air conditioning was noisy "
+        "all night and housekeeping skipped our room twice. Staff apologised but nothing changed."),
+    (1, "Would not return", "Waited 45 minutes to check in, the room was not cleaned properly "
+        "and our complaint to reception was ignored."),
+]
 
 CLAUDE_MODEL = "claude-opus-5-5"
 SUMMARY_PROMPT = """You are writing one section of a weekly guest review roundup for a hotel \
@@ -153,6 +170,26 @@ def claude_summary(client, hotel_name, reviews):
         return None
     text = "".join(b.text for b in response.content if b.type == "text").strip()
     return text or None
+
+
+def add_fake_review(h, now):
+    """Test mode: put one made-up review on a hotel's results and stats."""
+    rating, title, text = random.choice(FAKE_REVIEWS)
+    review = {
+        "Id": f"test-{random.randint(100000, 999999)}",
+        "SubmissionTime": now.isoformat(timespec="seconds"),
+        "Rating": rating,
+        "Title": f"[TEST] {title}",
+        "ReviewText": text,
+        "UserNickname": "test-guest",
+    }
+    cur = {**h["cur"], "distribution": dict(h["cur"]["distribution"])}
+    if cur["total"] is not None and cur["average"] is not None:
+        cur["average"] = (cur["average"] * cur["total"] + rating) / (cur["total"] + 1)
+        cur["total"] += 1
+    cur["distribution"][str(rating)] = cur["distribution"].get(str(rating), 0) + 1
+    h["cur"] = cur
+    h["new"] = [review] + h["new"]
 
 
 def basic_summary(reviews):
@@ -298,6 +335,8 @@ def main():
     since = now - timedelta(days=LOOKBACK_DAYS)
     last_run = parse_time(state["lastRun"]) if state.get("lastRun") else now - timedelta(days=7)
 
+    fake_count = int(os.environ.get("TEST_FAKE_REVIEWS") or 0)
+
     client = None
     if os.environ.get("ANTHROPIC_API_KEY"):
         import anthropic
@@ -311,7 +350,11 @@ def main():
             continue
         key = f"{hotel['brand'].lower()}:{hotel['product_id'].lower()}"
         name = hotel["name"]
-        passkey = hotel.get("passkey") or passkeys.get(hotel["brand"].lower())
+        passkey = (
+            hotel.get("passkey")
+            or os.environ.get(f"BV_PASSKEY_{hotel['brand'].upper()}")
+            or passkeys.get(hotel["brand"].lower())
+        )
         if not passkey:
             skipped.append(f"{name}: no Bazaarvoice passkey set for brand '{hotel['brand']}'")
             if key in hotel_state:
@@ -330,6 +373,8 @@ def main():
         seen_window = {r["Id"]: r["SubmissionTime"] for r in reviews}
         prev_state = hotel_state.get(key)
 
+        if prev_state is None and fake_count:
+            prev_state = {**cur, "seenIds": seen_window}
         if prev_state is None:
             baselined.append(name)
             new_state[key] = {**cur, "seenIds": seen_window}
@@ -343,11 +388,6 @@ def main():
         kept.update(seen_window)
         new_state[key] = {**cur, "seenIds": kept}
 
-        if new:
-            summary = claude_summary(client, name, new) if client else None
-            summary = summary or basic_summary(new)
-        else:
-            summary = ""
         results.append({
             "name": name,
             "brand": hotel["brand"],
@@ -355,13 +395,21 @@ def main():
             "prev": {k: prev_state.get(k) for k in ("total", "average", "distribution")},
             "cur": cur,
             "new": new,
-            "summary": summary,
         })
 
-    STATE_FILE.write_text(
-        json.dumps({"lastRun": now.isoformat(timespec="seconds"), "hotels": new_state}, indent=2),
-        encoding="utf-8",
-    )
+    if fake_count:
+        for h in random.sample(results, min(fake_count, len(results))):
+            add_fake_review(h, now)
+    else:
+        STATE_FILE.write_text(
+            json.dumps({"lastRun": now.isoformat(timespec="seconds"), "hotels": new_state}, indent=2),
+            encoding="utf-8",
+        )
+
+    for h in results:
+        if h["new"]:
+            summary = claude_summary(client, h["name"], h["new"]) if client else None
+            h["summary"] = summary or basic_summary(h["new"])
 
     for msg in skipped + errors:
         print(f"WARNING: {msg}", file=sys.stderr)
@@ -379,6 +427,8 @@ def main():
         title = f"Weekly Review Roundup: {total_new} new review(s) across {len(results)} hotel(s){flag} (week ending {now:%Y-%m-%d})"
     else:
         title = f"Weekly Review Roundup: setup notes (week ending {now:%Y-%m-%d})"
+    if fake_count:
+        title = "[TEST] " + title
     TITLE_FILE.write_text(title, encoding="utf-8")
     ROUNDUP_FILE.write_text(
         build_report(results, baselined, skipped, errors, last_run, now), encoding="utf-8"

@@ -3,7 +3,11 @@ name: Weekly review roundup
 on:
   schedule:
     - cron: "7 13 * * 5"     # Fridays 13:07 UTC (9:07am ET in summer, 8:07am ET in winter)
-  workflow_dispatch: {}      # allows manual "Run workflow" button
+  workflow_dispatch:         # allows manual "Run workflow" button
+    inputs:
+      test_fake_reviews:
+        description: "Test mode: add a fake review to this many random hotels (0 = normal run)"
+        default: "0"
 
 permissions:
   contents: write            # commit state.json back
@@ -25,6 +29,8 @@ jobs:
       - name: Build weekly roundup
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BV_PASSKEY_IHG: ${{ secrets.BV_PASSKEY_IHG }}
+          TEST_FAKE_REVIEWS: ${{ inputs.test_fake_reviews || '0' }}
         run: python weekly_roundup.py
 
       - name: Open roundup issue (GitHub emails you the issue)
