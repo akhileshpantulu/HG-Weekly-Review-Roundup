@@ -80,7 +80,7 @@ Actions tab > "Weekly review roundup" > **Run workflow**, and set "add a fake re
 
 - Each roundup issue @mentions the repo owner, so GitHub emails it even if you are not watching the repo (same approach as ReviewTracker). If emails still don't arrive, check https://github.com/settings/notifications (Email ticked under Participating, and the custom routing address) and your spam folder for notifications@github.com.
 
-- Schedule: Sundays at 7pm UK time, all year. GitHub cron only runs in UTC, so the workflow is scheduled at both 18:00 and 19:00 UTC and a first job lets through only the run that falls at 7pm in London (BST or GMT). GitHub can start scheduled runs a few minutes late. Manual runs always go ahead.
+- Schedule: Sundays at 7pm UK time, all year (BST and GMT). GitHub often starts scheduled runs late, sometimes by hours, so the workflow is triggered at 13:47 UTC and its first step waits until 19:00 London time before building the roundup. If GitHub starts it after 7pm, the roundup is sent as soon as it starts. Manual runs never wait. A roundup is sent every week, including weeks with no new reviews.
 - Passkeys are public client-side keys embedded in each brand's website. If one is rotated, that hotel shows under "Errors" in the email (or the run fails and GitHub emails you); the current keys are in ReviewTracker's `docs/index.html`, or can be read from the Network tab (filter `bazaarvoice`) on a hotel's review page.
 - If a hotel fails to load, its previous snapshot is kept so the next successful week compares against it.
 - Summaries make one model request per hotel with new reviews. Review text is sent to GitHub Models (or to Anthropic if the Claude key is set).
